@@ -1,6 +1,8 @@
 import type { SVGProps } from 'react'
 
 import * as Checkbox from '@radix-ui/react-checkbox'
+import * as Dialog from '@radix-ui/react-dialog'
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 
 import { api } from '@/utils/client/api'
 
@@ -67,6 +69,8 @@ interface TodoListProps {
   statuses: any[]
 }
 export const TodoList: React.FC<TodoListProps> = ({ statuses }) => {
+  const [parent] = useAutoAnimate()
+
   const { data: todos = [] } = api.todo.getAll.useQuery({
     statuses,
   })
@@ -87,48 +91,90 @@ export const TodoList: React.FC<TodoListProps> = ({ statuses }) => {
   })
 
   return (
-    <ul className="grid grid-cols-1 gap-y-3">
-      {todos.map((todo) => (
-        <li key={todo.id}>
-          <div className="flex items-center justify-between rounded-12 border border-gray-200 px-4 py-3 shadow-sm">
-            <div className="flex items-center">
-              <Checkbox.Root
-                checked={todo.status === 'completed'}
-                onCheckedChange={() =>
-                  updateTodo({
-                    status: todo.status === 'pending' ? 'completed' : 'pending',
-                    todoId: todo.id,
-                  })
-                }
-                id={String(todo.id)}
-                className="flex h-6 w-6 items-center justify-center rounded-6 border border-gray-300 focus:border-gray-700 focus:outline-none data-[state=checked]:border-gray-700 data-[state=checked]:bg-gray-700"
-              >
-                <Checkbox.Indicator>
-                  <CheckIcon className="h-4 w-4 text-white" />
-                </Checkbox.Indicator>
-              </Checkbox.Root>
+    <>
+      {todos.length > 0 ? (
+        <ul className="grid grid-cols-1 gap-y-3" ref={parent}>
+          {todos.map((todo) => (
+            <Dialog.Root>
+              <li key={todo.id}>
+                <div className="flex items-center justify-between rounded-12 border border-gray-200 px-4 py-3 shadow-sm">
+                  <div className="flex items-center">
+                    <Checkbox.Root
+                      checked={todo.status === 'completed'}
+                      onCheckedChange={() =>
+                        updateTodo({
+                          status:
+                            todo.status === 'pending' ? 'completed' : 'pending',
+                          todoId: todo.id,
+                        })
+                      }
+                      id={String(todo.id)}
+                      className="flex h-6 w-6 items-center justify-center rounded-6 border border-gray-300 focus:border-gray-700 focus:outline-none data-[state=checked]:border-gray-700 data-[state=checked]:bg-gray-700"
+                    >
+                      <Checkbox.Indicator>
+                        <CheckIcon className="h-4 w-4 text-white" />
+                      </Checkbox.Indicator>
+                    </Checkbox.Root>
 
-              <label
-                className={`${
-                  todo.status === 'completed'
-                    ? 'block pl-3 font-medium line-through'
-                    : 'block pl-3 font-medium'
-                } `}
-                htmlFor={String(todo.id)}
-              >
-                {todo.body}
-              </label>
-            </div>
-            <button
-              className="cursor-pointer px-2 text-2xl"
-              onClick={() => deleteTodo({ id: Number(todo.id) })}
-            >
-              &times;
-            </button>
-          </div>
-        </li>
-      ))}
-    </ul>
+                    <label
+                      className={`${
+                        todo.status === 'completed'
+                          ? 'block pl-3 font-medium line-through'
+                          : 'block pl-3 font-medium'
+                      } `}
+                      htmlFor={String(todo.id)}
+                    >
+                      {todo.body}
+                    </label>
+                  </div>
+                  <Dialog.Trigger asChild>
+                    <button
+                      className="cursor-pointer"
+                      onClick={() => console.log(todo)}
+                    >
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </Dialog.Trigger>
+                  <Dialog.Portal>
+                    <Dialog.Overlay className="fixed inset-0 bg-[#00000070]" />
+                    <Dialog.Content className="fixed left-1/2 top-1/2 max-h-[85vh] w-[90vh] max-w-[450px] -translate-x-[50%] -translate-y-[50%] rounded-12 bg-white p-6">
+                      <Dialog.Title className="text-center text-2xl font-medium text-gray-700">
+                        Delete Todo
+                      </Dialog.Title>
+                      <Dialog.Description className="mt-5 text-center text-lg">
+                        Are you sure you want to delete{' '}
+                        <span className="font-bold">{todo.body}</span>?
+                      </Dialog.Description>
+
+                      <div className="mt-5 flex items-center justify-center gap-4">
+                        <Dialog.Close asChild>
+                          <button
+                            className="Button green w-1/2 rounded-12 bg-gray-700 px-4 py-2 text-white"
+                            onClick={() => deleteTodo({ id: Number(todo.id) })}
+                          >
+                            Confirm
+                          </button>
+                        </Dialog.Close>
+                        <Dialog.Close asChild>
+                          <button
+                            className="IconButton w-1/2 rounded-12 border-[2px] border-gray-700 px-4 py-2"
+                            aria-label="Close"
+                          >
+                            Cancel
+                          </button>
+                        </Dialog.Close>
+                      </div>
+                    </Dialog.Content>
+                  </Dialog.Portal>
+                </div>
+              </li>
+            </Dialog.Root>
+          ))}
+        </ul>
+      ) : (
+        <h1 className="text-center font-medium">Not found</h1>
+      )}
+    </>
   )
 }
 
